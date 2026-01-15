@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>كاشير مطعم ليالي الفرات</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link href="https://fonts.googleapis.com/css2?family=Changa:wght@600&display=swap" rel="stylesheet">
 
 <style>
@@ -20,41 +22,43 @@ body {
 
 h1 { font-size: 38px; }
 
+/* الأزرار */
 button {
     font-size: 24px;
-    padding: 14px;
+    padding: 16px;
     margin: 10px;
-    border-radius: 15px;
+    border-radius: 18px;
     border: none;
     cursor: pointer;
     font-weight: bold;
+    width: 100%;
 }
 
 .rainbow {
-    background: linear-gradient(270deg, red, orange, yellow, green, cyan, blue, violet);
-    background-size: 600% 600%;
+    background: linear-gradient(270deg, #00c853, #aeea00, #00c853);
+    background-size: 400% 400%;
     animation: rainbow 3s ease infinite;
 }
 
-@keyframes rainbow {
-    0% {background-position:0% 50%}
-    50% {background-position:100% 50%}
-    100% {background-position:0% 50%}
+.big-btn {
+    width: 95%;
+    font-size: 28px;
+    padding: 22px;
 }
 
-.big-btn { width: 90%; }
-
+/* التغيير: شبكة الأصناف متجاوبة للمتصفح والموبايل */
 .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
 }
 
 input {
-    width: 90%;
-    padding: 12px;
-    font-size: 20px;
-    margin: 8px;
-    border-radius: 10px;
+    width: 95%;
+    padding: 14px;
+    font-size: 22px;
+    margin: 10px auto;
+    border-radius: 12px;
     border: none;
 }
 
@@ -66,10 +70,25 @@ table {
 
 td, th {
     border: 1px solid white;
-    padding: 6px;
+    padding: 8px;
 }
 
-/* تحسين الطباعة */
+/* تحسين الموبايل */
+@media (max-width: 600px) {
+    h1 { font-size: 32px; }
+
+    button {
+        font-size: 26px;
+        padding: 22px;
+    }
+
+    .big-btn {
+        font-size: 30px;
+        padding: 24px;
+    }
+}
+
+/* الطباعة */
 @media print {
     body { background: white; color: black; }
     button { display: none; }
@@ -93,9 +112,9 @@ td, th {
     <button class="rainbow big-btn" onclick="goCheckout()">التالي</button>
 </div>
 
-<!-- تفاصيل الطلب -->
+<!-- الفاتورة -->
 <div id="checkout" class="screen">
-    <h1>تفاصيل الطلب</h1>
+    <h1 id="orderNumber"></h1>
 
     <table>
         <thead>
@@ -157,6 +176,7 @@ const prices = {
 
 let order = {};
 let history = JSON.parse(localStorage.getItem("orders")) || [];
+let orderCounter = parseInt(localStorage.getItem("orderCounter")) || 1;
 
 const itemsDiv = document.getElementById("items");
 
@@ -178,7 +198,6 @@ function show(id) {
 }
 
 function goMenu() { show("menu"); }
-function goCheckout() { renderOrder(); show("checkout"); }
 function goHome() { show("home"); }
 
 // عرض الطلب
@@ -193,30 +212,53 @@ function renderOrder() {
         html += `<tr><td>${item}</td><td>${qty}</td><td>${price}</td></tr>`;
     }
 
-    document.getElementById("orderDetails").innerHTML = html || "<tr><td colspan='3'>لا يوجد طلب</td></tr>";
-    document.getElementById("totalPrice").innerText = "المجموع: " + total + " د.ع";
+    document.getElementById("orderDetails").innerHTML =
+        html || "<tr><td colspan='3'>لا يوجد طلب</td></tr>";
+
+    document.getElementById("totalPrice").innerText =
+        "المجموع: " + total + " د.ع";
+
+    document.getElementById("orderNumber").innerText =
+        "طلب رقم " + orderCounter;
+}
+
+function goCheckout() {
+    renderOrder();
+    show("checkout");
 }
 
 // طباعة + حفظ
 function printOrder() {
-    if (Object.keys(order).length === 0) return alert("لا يوجد طلب");
+    if (Object.keys(order).length === 0) {
+        alert("لا يوجد طلب");
+        return;
+    }
 
-    const total = Object.keys(order).reduce((s,i)=>s+prices[i]*order[i],0);
+    const total = Object.keys(order)
+        .reduce((s, i) => s + prices[i] * order[i], 0);
 
     history.push({
+        orderNumber: orderCounter,
         date: new Date().toLocaleString("ar-IQ"),
-        items: {...order},
+        items: { ...order },
         total
     });
 
     localStorage.setItem("orders", JSON.stringify(history));
+
+    orderCounter++;
+    localStorage.setItem("orderCounter", orderCounter);
+
     window.print();
     order = {};
 }
 
 // الإدارة
 function openAdmin() {
-    if (prompt("ادخل الرمز") !== "098123") return alert("رمز خطأ");
+    if (prompt("ادخل الرمز") !== "098123") {
+        alert("رمز خطأ");
+        return;
+    }
     renderAdmin();
     show("admin");
 }
@@ -227,19 +269,31 @@ function renderAdmin() {
 
     history.forEach(o => {
         let details = "";
-        for (let i in o.items) details += `${i} × ${o.items[i]}<br>`;
+        for (let i in o.items) {
+            details += `${i} × ${o.items[i]}<br>`;
+        }
         all += o.total;
-        rows += `<tr><td>${o.date}</td><td>${details}</td><td>${o.total}</td></tr>`;
+        rows += `
+        <tr>
+            <td>طلب ${o.orderNumber}<br>${o.date}</td>
+            <td>${details}</td>
+            <td>${o.total}</td>
+        </tr>`;
     });
 
-    document.getElementById("adminTable").innerHTML = rows || "<tr><td colspan='3'>لا توجد طلبات</td></tr>";
-    document.getElementById("grandTotal").innerText = "المجموع الكلي: " + all + " د.ع";
+    document.getElementById("adminTable").innerHTML =
+        rows || "<tr><td colspan='3'>لا توجد طلبات</td></tr>";
+
+    document.getElementById("grandTotal").innerText =
+        "المجموع الكلي: " + all + " د.ع";
 }
 
 function clearHistory() {
     if (!confirm("مسح جميع الطلبات؟")) return;
     history = [];
     localStorage.removeItem("orders");
+    localStorage.removeItem("orderCounter");
+    orderCounter = 1;
     renderAdmin();
 }
 </script>
