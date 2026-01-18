@@ -22,7 +22,6 @@ body {
 
 h1 { font-size: 38px; }
 
-/* الأزرار */
 button {
     font-size: 24px;
     padding: 16px;
@@ -46,7 +45,6 @@ button {
     padding: 22px;
 }
 
-/* التغيير: شبكة الأصناف متجاوبة للمتصفح والموبايل */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -73,22 +71,6 @@ td, th {
     padding: 8px;
 }
 
-/* تحسين الموبايل */
-@media (max-width: 600px) {
-    h1 { font-size: 32px; }
-
-    button {
-        font-size: 26px;
-        padding: 22px;
-    }
-
-    .big-btn {
-        font-size: 30px;
-        padding: 24px;
-    }
-}
-
-/* الطباعة */
 @media print {
     body { background: white; color: black; }
     button { display: none; }
@@ -127,8 +109,8 @@ td, th {
         <tbody id="orderDetails"></tbody>
     </table>
 
-    <input id="customerName" placeholder="عنوان الزبون">
-    <input id="customerPhone" placeholder="رقم الهاتف">
+    <!-- العنوان -->
+    <input id="customerAddress" placeholder="عنوان الزبون">
 
     <h2 id="totalPrice"></h2>
 
@@ -145,6 +127,7 @@ td, th {
             <tr>
                 <th>التاريخ</th>
                 <th>التفاصيل</th>
+                <th>العنوان</th>
                 <th>المجموع</th>
             </tr>
         </thead>
@@ -158,7 +141,6 @@ td, th {
 </div>
 
 <script>
-// الأسعار
 const prices = {
     "سمك مسكوف": 15000,
     "صينيه مندي لحم": 16000,
@@ -180,7 +162,6 @@ let orderCounter = parseInt(localStorage.getItem("orderCounter")) || 1;
 
 const itemsDiv = document.getElementById("items");
 
-// إنشاء أزرار الأصناف
 Object.keys(prices).forEach(item => {
     const btn = document.createElement("button");
     btn.className = "rainbow";
@@ -200,7 +181,6 @@ function show(id) {
 function goMenu() { show("menu"); }
 function goHome() { show("home"); }
 
-// عرض الطلب
 function renderOrder() {
     let html = "";
     let total = 0;
@@ -227,12 +207,13 @@ function goCheckout() {
     show("checkout");
 }
 
-// طباعة + حفظ
 function printOrder() {
     if (Object.keys(order).length === 0) {
         alert("لا يوجد طلب");
         return;
     }
+
+    const address = document.getElementById("customerAddress").value || "—";
 
     const total = Object.keys(order)
         .reduce((s, i) => s + prices[i] * order[i], 0);
@@ -241,7 +222,8 @@ function printOrder() {
         orderNumber: orderCounter,
         date: new Date().toLocaleString("ar-IQ"),
         items: { ...order },
-        total
+        address: address,
+        total: total
     });
 
     localStorage.setItem("orders", JSON.stringify(history));
@@ -251,9 +233,9 @@ function printOrder() {
 
     window.print();
     order = {};
+    document.getElementById("customerAddress").value = "";
 }
 
-// الإدارة
 function openAdmin() {
     if (prompt("ادخل الرمز") !== "098123") {
         alert("رمز خطأ");
@@ -277,12 +259,13 @@ function renderAdmin() {
         <tr>
             <td>طلب ${o.orderNumber}<br>${o.date}</td>
             <td>${details}</td>
+            <td>${o.address}</td>
             <td>${o.total}</td>
         </tr>`;
     });
 
     document.getElementById("adminTable").innerHTML =
-        rows || "<tr><td colspan='3'>لا توجد طلبات</td></tr>";
+        rows || "<tr><td colspan='4'>لا توجد طلبات</td></tr>";
 
     document.getElementById("grandTotal").innerText =
         "المجموع الكلي: " + all + " د.ع";
