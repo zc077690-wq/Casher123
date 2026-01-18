@@ -25,7 +25,7 @@ h1 { font-size: 38px; }
 button {
     font-size: 24px;
     padding: 16px;
-    margin: 10px;
+    margin: 10px auto;
     border-radius: 18px;
     border: none;
     cursor: pointer;
@@ -39,6 +39,12 @@ button {
     animation: rainbow 3s ease infinite;
 }
 
+@keyframes rainbow {
+    0% {background-position:0% 50%}
+    50% {background-position:100% 50%}
+    100% {background-position:0% 50%}
+}
+
 .big-btn {
     width: 95%;
     font-size: 28px;
@@ -47,7 +53,7 @@ button {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
 }
 
@@ -80,21 +86,18 @@ td, th {
 
 <body>
 
-<!-- الرئيسية -->
 <div id="home" class="screen active">
     <h1>كاشير مطعم ليالي الفرات</h1>
     <button class="rainbow big-btn" onclick="goMenu()">التالي</button>
     <button class="rainbow big-btn" onclick="openAdmin()">سجل الطلبات</button>
 </div>
 
-<!-- الأصناف -->
 <div id="menu" class="screen">
     <h1>اختر الطلب</h1>
     <div class="grid" id="items"></div>
     <button class="rainbow big-btn" onclick="goCheckout()">التالي</button>
 </div>
 
-<!-- الفاتورة -->
 <div id="checkout" class="screen">
     <h1 id="orderNumber"></h1>
 
@@ -109,8 +112,8 @@ td, th {
         <tbody id="orderDetails"></tbody>
     </table>
 
-    <!-- العنوان -->
-    <input id="customerAddress" placeholder="عنوان الزبون">
+    <input id="customerName" placeholder="عنوان الزبون">
+    <input id="customerPhone" placeholder="رقم الهاتف">
 
     <h2 id="totalPrice"></h2>
 
@@ -118,16 +121,15 @@ td, th {
     <button class="rainbow big-btn" onclick="goHome()">رجوع</button>
 </div>
 
-<!-- الإدارة -->
 <div id="admin" class="screen">
     <h1>سجل الطلبات</h1>
 
     <table>
         <thead>
             <tr>
+                <th>العنوان</th>
                 <th>التاريخ</th>
                 <th>التفاصيل</th>
-                <th>العنوان</th>
                 <th>المجموع</th>
             </tr>
         </thead>
@@ -213,17 +215,17 @@ function printOrder() {
         return;
     }
 
-    const address = document.getElementById("customerAddress").value || "—";
+    const address = document.getElementById("customerName").value || "-";
 
     const total = Object.keys(order)
         .reduce((s, i) => s + prices[i] * order[i], 0);
 
     history.push({
         orderNumber: orderCounter,
+        address: address,
         date: new Date().toLocaleString("ar-IQ"),
         items: { ...order },
-        address: address,
-        total: total
+        total
     });
 
     localStorage.setItem("orders", JSON.stringify(history));
@@ -233,7 +235,6 @@ function printOrder() {
 
     window.print();
     order = {};
-    document.getElementById("customerAddress").value = "";
 }
 
 function openAdmin() {
@@ -257,9 +258,9 @@ function renderAdmin() {
         all += o.total;
         rows += `
         <tr>
+            <td>${o.address}</td>
             <td>طلب ${o.orderNumber}<br>${o.date}</td>
             <td>${details}</td>
-            <td>${o.address}</td>
             <td>${o.total}</td>
         </tr>`;
     });
